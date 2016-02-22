@@ -3048,7 +3048,7 @@ HttpTransact::HandleCacheOpenReadMiss(State *s)
 
   if (!h->is_cache_control_set(HTTP_VALUE_ONLY_IF_CACHED)) {
     find_server_and_update_current_info(s);
-    if (!ats_is_ip(&s->current.server->addr)) {
+    if (!ats_is_supported_family(&s->current.server->addr)) {
       ink_release_assert(s->current.request_to == PARENT_PROXY || s->http_config_param->no_dns_forward_to_parent != 0);
       if (s->current.request_to == PARENT_PROXY) {
         TRANSACT_RETURN(SM_ACTION_DNS_LOOKUP, HttpTransact::PPDNSLookup);
@@ -5521,6 +5521,11 @@ HttpTransact::initialize_state_variables_from_request(State *s, HTTPHdr *obsolet
   }
 
   s->next_hop_scheme = s->scheme = incoming_request->url_get()->scheme_get_wksidx();
+
+  char *unix_sock = s->url_map.getUnixSocket();
+  if(unix_sock) {
+      s->server_info.name = unix_sock;
+  }
 
   // With websockets we need to make an outgoing request
   // as http or https.

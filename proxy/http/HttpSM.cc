@@ -2093,7 +2093,7 @@ HttpSM::process_hostdb_info(HostDBInfo *r)
     if (ret) {
       t_state.host_db_info = *ret;
       ink_release_assert(!t_state.host_db_info.reverse_dns);
-      ink_release_assert(ats_is_ip(t_state.host_db_info.ip()));
+      ink_release_assert(ats_is_supported_family(t_state.host_db_info.ip()));
     }
   } else {
     DebugSM("http", "[%" PRId64 "] DNS lookup failed for '%s'", sm_id, t_state.dns_info.lookup_name);
@@ -4539,11 +4539,13 @@ HttpSM::do_http_server_open(bool raw)
 
   ink_assert(pending_action == NULL);
 
-  if (false == t_state.api_server_addr_set) {
-    ink_assert(t_state.current.server->port > 0);
-    t_state.current.server->addr.port() = htons(t_state.current.server->port);
-  } else {
-    ink_assert(ats_ip_port_cast(&t_state.current.server->addr) != 0);
+  if (ip_family != AF_UNIX) {
+    if (false == t_state.api_server_addr_set) {
+      ink_assert(t_state.current.server->port > 0);
+      t_state.current.server->addr.port() = htons(t_state.current.server->port);
+    } else {
+      ink_assert(ats_ip_port_cast(&t_state.current.server->addr) != 0);
+    }
   }
 
   char addrbuf[INET6_ADDRPORTSTRLEN];
